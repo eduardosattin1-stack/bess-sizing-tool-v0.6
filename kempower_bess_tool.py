@@ -69,14 +69,15 @@ st.markdown(f"""
 #  POLARIUM BESS PRODUCT MAP  (kWh → max kW)
 # ─────────────────────────────────────────────
 BESS_POWER_MAP = {
-    140:  100,
-    280:  200,
-    420:  250,
-    560:  350,
-    700:  400,
-    840:  500,
-    1120: 650,
-    1400: 800,
+    # Polarium: 1 cabinet = 140 kWh + 1 inverter = 75 kW
+    140:   75,   # 1 cabinet
+    280:  150,   # 2 cabinets
+    420:  225,   # 3 cabinets
+    560:  300,   # 4 cabinets
+    700:  375,   # 5 cabinets
+    840:  450,   # 6 cabinets
+    1120: 600,   # 8 cabinets
+    1400: 750,   # 10 cabinets
 }
 
 # ─────────────────────────────────────────────
@@ -223,9 +224,19 @@ def run_simulation(csv_bytes, grid_limit, charger_cap, nominal_cap, bess_max_pow
 
 
 def load_uploaded_file(f):
+    """Read CSV or XLSX without pd.read_excel — avoids the openpyxl engine ImportError on Streamlit Cloud."""
     name = f.name.lower()
     if name.endswith(('.xlsx', '.xls')):
-        df = pd.read_excel(f)
+        import openpyxl
+        raw = f.read()
+        wb  = openpyxl.load_workbook(io.BytesIO(raw), read_only=True, data_only=True)
+        ws  = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+        wb.close()
+        if not rows:
+            raise ValueError("Empty Excel file")
+        headers = [str(c) if c is not None else f"col_{i}" for i, c in enumerate(rows[0])]
+        df = pd.DataFrame(rows[1:], columns=headers)
         buf = io.BytesIO()
         df.to_csv(buf, index=False)
         return buf.getvalue()
