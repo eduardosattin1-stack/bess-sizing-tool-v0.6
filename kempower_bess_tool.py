@@ -62,6 +62,21 @@ st.markdown(f"""
     font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
     text-transform: uppercase; color: {KEMPOWER_ORANGE}; margin: 16px 0 6px 0;
   }}
+  [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {{
+    background: #2a2a2a !important;
+    border: 1.5px dashed {KEMPOWER_ORANGE} !important;
+    border-radius: 8px !important;
+  }}
+  [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] span,
+  [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] small {{
+    color: #aaa !important;
+  }}
+  [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button {{
+    background: {KEMPOWER_ORANGE} !important;
+    color: #fff !important;
+    border: none !important;
+    border-radius: 6px !important;
+  }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -85,7 +100,16 @@ BESS_POWER_MAP = {
 # ─────────────────────────────────────────────
 with st.sidebar:
     if LOGO_PATH.exists():
-        st.image(str(LOGO_PATH), width=180)
+        col_icon, col_text = st.columns([1, 2.8])
+        with col_icon:
+            st.image(str(LOGO_PATH), width=52)
+        with col_text:
+            st.markdown(
+                "<p style='color:#ffffff; font-size:1.55rem; font-weight:800; "
+                "letter-spacing:-0.02em; margin:0; padding-top:10px; line-height:1;'>"
+                "kempower</p>",
+                unsafe_allow_html=True
+            )
     else:
         st.markdown(f"<h2 style='color:{KEMPOWER_ORANGE}'>⚡ Kempower</h2>", unsafe_allow_html=True)
 
@@ -105,7 +129,7 @@ with st.sidebar:
                                 help="e.g. 0.85 = 85% depth of discharge")
 
     st.markdown("### 📈 Simulation")
-    load_multiplier = st.slider("Load Scaling Factor", 0.5, 3.0, 1.0, 0.05)
+    load_multiplier = st.slider("Load Scaling Factor", 0.25, 2.0, 1.0, 0.05)
     growth_rate     = st.slider("Annual Demand Growth (%)", 0, 20, 5) / 100
 
     st.markdown("### 💶 Financial Assumptions")
@@ -121,7 +145,12 @@ with st.sidebar:
     analysis_years     = st.slider("Financial Horizon (years)", 5, 15, 10)
 
     st.markdown("---")
-    uploaded_file = st.file_uploader("📂 Load Profile (CSV / XLSX)", type=["csv", "xlsx"])
+    st.markdown("### 📂 Load Profile")
+    uploaded_file = st.file_uploader(
+        "Upload CSV or XLSX (7-day, 5-min intervals)",
+        type=["csv", "xlsx"],
+        label_visibility="collapsed"
+    )
 
 
 # ─────────────────────────────────────────────
@@ -301,9 +330,10 @@ def compute_financials(yearly_results, nominal_cap, bess_capex_per_kwh, bess_ope
     lo, hi = -0.5, 5.0
     for _ in range(120):
         mid = (lo + hi) / 2
-        (lo if npv_r(mid) > 0 else hi).__class__  # dummy
-        if npv_r(mid) > 0: lo = mid
-        else:               hi = mid
+        if npv_r(mid) > 0:
+            lo = mid
+        else:
+            hi = mid
     irr = lo * 100
 
     return fin_df, bess_capex, payback_yr, round(irr, 1), round(fin_df["Cumulative NPV (€)"].iloc[-1])
