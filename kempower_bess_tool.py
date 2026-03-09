@@ -26,13 +26,13 @@ st.markdown(f"""
 <style>
   #MainMenu, footer, header {{visibility: hidden;}}
   .block-container {{padding-top: 0.8rem; padding-bottom: 1rem;}}
-  [data-testid="stSidebar"] {{background: {KEMPOWER_DARK}; color: #fff;}}
+  [data-testid="stSidebar"] {{background: #F2F2F2; color: #1a1a1a;}}
   [data-testid="stSidebar"] label,
   [data-testid="stSidebar"] .stMarkdown p,
-  [data-testid="stSidebar"] .stMarkdown h3 {{color: #fff !important;}}
+  [data-testid="stSidebar"] .stMarkdown h3 {{color: #1a1a1a !important;}}
   [data-testid="stSidebar"] .stSelectbox label,
   [data-testid="stSidebar"] .stNumberInput label,
-  [data-testid="stSidebar"] .stSlider label {{color: #ccc !important;}}
+  [data-testid="stSidebar"] .stSlider label {{color: #333 !important;}}
   div[data-testid="metric-container"] {{
     background: #fff; border-left: 4px solid {KEMPOWER_ORANGE};
     border-radius: 8px; padding: 12px 16px;
@@ -63,13 +63,13 @@ st.markdown(f"""
     text-transform: uppercase; color: {KEMPOWER_ORANGE}; margin: 16px 0 6px 0;
   }}
   [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {{
-    background: #2a2a2a !important;
+    background: #e8e8e8 !important;
     border: 1.5px dashed {KEMPOWER_ORANGE} !important;
     border-radius: 8px !important;
   }}
   [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] span,
   [data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] small {{
-    color: #aaa !important;
+    color: #555 !important;
   }}
   [data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button {{
     background: {KEMPOWER_ORANGE} !important;
@@ -100,16 +100,7 @@ BESS_POWER_MAP = {
 # ─────────────────────────────────────────────
 with st.sidebar:
     if LOGO_PATH.exists():
-        col_icon, col_text = st.columns([1, 2.8])
-        with col_icon:
-            st.image(str(LOGO_PATH), width=52)
-        with col_text:
-            st.markdown(
-                "<p style='color:#ffffff; font-size:1.55rem; font-weight:800; "
-                "letter-spacing:-0.02em; margin:0; padding-top:10px; line-height:1;'>"
-                "kempower</p>",
-                unsafe_allow_html=True
-            )
+        st.image(str(LOGO_PATH), width=180)
     else:
         st.markdown(f"<h2 style='color:{KEMPOWER_ORANGE}'>⚡ Kempower</h2>", unsafe_allow_html=True)
 
@@ -620,12 +611,21 @@ with tab2:
         elif val < 5: return 'color:#f57f17; font-weight:600'
         return               'color:#c62828; font-weight:600'
 
+    def highlight_bess(val):
+        # Light orange tint scaled to value — no matplotlib needed
+        try:
+            max_val = res_df_table["BESS MWh"].max()
+            intensity = int(255 - (val / max_val) * 120) if max_val > 0 else 255
+            return f'background-color: rgb(255, {intensity}, {intensity}); color: #1a1a1a'
+        except Exception:
+            return ''
+
     styled = (res_df_table.style
               .format({"Unmet %": "{:.2f}%", "SoH %": "{:.1f}%",
                        "EV MWh": "{:.1f}", "Grid MWh": "{:.1f}",
                        "BESS MWh": "{:.1f}", "Missed MWh": "{:.1f}"})
               .applymap(color_unmet, subset=["Unmet %"])
-              .background_gradient(cmap='Oranges', subset=["BESS MWh"], vmin=0)
+              .applymap(highlight_bess, subset=["BESS MWh"])
               .set_properties(**{'font-size': '0.85rem'}))
     st.dataframe(styled, use_container_width=True, height=400)
 
