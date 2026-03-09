@@ -24,7 +24,20 @@ st.set_page_config(page_title="Kempower | BESS Sizing", layout="wide", page_icon
 
 st.markdown(f"""
 <style>
-  #MainMenu, footer, header {{visibility: hidden;}}
+  #MainMenu, footer {{visibility: hidden;}}
+  header {{visibility: visible;}}
+  /* Keep the sidebar collapse/expand toggle always visible */
+  [data-testid="collapsedControl"] {{
+    display: flex !important;
+    visibility: visible !important;
+    background: {KEMPOWER_ORANGE} !important;
+    border-radius: 0 8px 8px 0 !important;
+    color: #fff !important;
+  }}
+  [data-testid="stSidebarCollapsedControl"] {{
+    display: flex !important;
+    visibility: visible !important;
+  }}
   .block-container {{padding-top: 0.8rem; padding-bottom: 1rem;}}
   [data-testid="stSidebar"] {{background: #F2F2F2; color: #1a1a1a;}}
   [data-testid="stSidebar"] label,
